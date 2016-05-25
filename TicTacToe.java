@@ -1,3 +1,4 @@
+import java.io.*;
 import java.util.Scanner;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -5,9 +6,10 @@ import java.util.Collections;
 import java.util.Comparator;
 
 /**
- * @Author: Chenxu ZHAO 726503
- * @Vision: 01/05/2015
+ * @Author Chenxu ZHAO 726503
+ * @Vision: 20/05/2015
  */
+
  /* Main class which provides management of command lines to manage whole system
   * and static main method to run this system
  * */
@@ -18,13 +20,14 @@ public class TicTacToe {
 
     //Commands that can be input by users
     private static String exitgame = "exit";//exit system
-    private static String addPlayer = "addplayer";//add new users
+    private static String addPlayer = "addplayer";//add new human player
+    private static String addAIPlayer = "addaiplayer";//add new ai player
     private static String removePlayer = "removeplayer";//remove users
     private static String editPlayer = "editplayer";//modify users' informaiton
     private static String resetStats = "resetstats";//reset users' statistics informaiton
     private static String displayPlayer = "displayplayer";//display users' informaiton
     private static String rankings = "rankings";//display rank informaiton
-    private static String playGame = "playgame";//play a game between tow users
+    private static String playGame = "playgame";//play a game between two users
 
     /*Constructor*/
     public TicTacToe() {
@@ -33,62 +36,86 @@ public class TicTacToe {
 
     /* Operate the game system with command lines*/
     public void operateSystem(PlayerManager playerManager, GameManager gameManager) {
+        playerManager.resumeInformation();
         System.out.println("Welcome to Tic Tac Toe!");
         String[] command;
         while (true) {
-            System.out.println();
-            System.out.print(">");
-
-            command = input.nextLine().split(" ");//split user's input by space
-
-            if (command[0].equals(""))//null command
-            {
-                continue;
-            }
-            if (addPlayer.equalsIgnoreCase(command[0])) {
-                playerManager.addPlayer(command[1].split(",")[0],
-                        command[1].split(",")[1],
-                        command[1].split(",")[2]);
-            } else if (exitgame.equalsIgnoreCase(command[0])) {
+            try {
                 System.out.println();
-                System.exit(0);
-            } else if (removePlayer.equalsIgnoreCase(command[0])) {
-                if (command.length == 1) {
-                    System.out.println("Are you sure you want to remove all players? (y/n)");
-                    if (input.nextLine().toString().equalsIgnoreCase("y")) {
-                        playerManager.removeAllPlayers();
+                System.out.print(">");
+
+                command = input.nextLine().split(" ");//split user's input by space
+
+                if (command[0].equals("")){//null command
+                    continue;
+                }
+
+                if (addPlayer.equalsIgnoreCase(command[0])) {
+                    if (command[1].split(",").length != 3) {//not enough arguments
+                        throw new Exception("Incorrect number of arguments supplied to command.");
                     }
-                } else {
-                    playerManager.removePlayer(command[1].split(",")[0].trim());
-                }
-            } else if (editPlayer.equalsIgnoreCase(command[0])) {
-                playerManager.modifyPlayer(command[1].split(",")[0],
-                        command[1].split(",")[1],
-                        command[1].split(",")[2]);
-            } else if (resetStats.equalsIgnoreCase(command[0])) {
-                if (command.length == 1) {
-                    System.out.println("Are you sure you want to " +
-                            "reset all player statistics? (y/n)");
-                    if (input.nextLine().toString().equalsIgnoreCase("y")) {
-                        playerManager.resetAllPlayers();
+                    playerManager.addPlayer(command[1].split(",")[0],
+                            command[1].split(",")[1],
+                            command[1].split(",")[2]);
+                } else if (exitgame.equalsIgnoreCase(command[0])) {
+                    playerManager.storageInformation();
+                    System.out.println();
+                    System.exit(0);
+                } else if (removePlayer.equalsIgnoreCase(command[0])) {
+                    if (command.length == 1) {
+                        System.out.println("Are you sure you want to remove all players? (y/n)");
+                        if (input.nextLine().equalsIgnoreCase("y")) {
+                            playerManager.removeAllPlayers();
+                        }
+                    } else {
+                        playerManager.removePlayer(command[1].split(",")[0].trim());
                     }
-                } else {
-                    playerManager.resetPlayer(command[1].split(",")[0].trim());
+                } else if (editPlayer.equalsIgnoreCase(command[0])) {
+                    if (command[1].split(",").length != 3) {//not enough arguments
+                        throw new Exception("Incorrect number of arguments supplied to command.");
+                    }
+                    playerManager.modifyPlayer(command[1].split(",")[0],
+                            command[1].split(",")[1],
+                            command[1].split(",")[2]);
+                } else if (resetStats.equalsIgnoreCase(command[0])) {
+                    if (command.length == 1) {
+                        System.out.println("Are you sure you want to " +
+                                "reset all player statistics? (y/n)");
+                        if (input.nextLine().equalsIgnoreCase("y")) {
+                            playerManager.resetAllPlayers();
+                        }
+                    } else {
+                        playerManager.resetPlayer(command[1].split(",")[0].trim());
+                    }
+                } else if (displayPlayer.equalsIgnoreCase(command[0])) {
+                    if (command.length == 1) {
+                        playerManager.displayAllPlayers();
+                    } else {
+                        playerManager.displayPlayer(command[1].split(",")[0].trim());
+                    }
+                } else if (rankings.equalsIgnoreCase(command[0])) {
+                    playerManager.rankPlayer();
+                } else if (playGame.equalsIgnoreCase(command[0])) {
+                    if (command[1].split(",").length != 2) {//not enough arguments
+                        throw new Exception("Incorrect number of arguments supplied to command.");
+                    }
+                    if (playerManager.checkTwoPlayers(command[1].split(",")[0].trim(),
+                            command[1].split(",")[1].trim())) {
+                        gameManager.playGame(playerManager, input, command[1].split(",")[0].trim()
+                                , command[1].split(",")[1].trim());
+                    }
+                } else if (addAIPlayer.equalsIgnoreCase(command[0])) {
+                    if (command[1].split(",").length != 3) {//not enough arguments
+                        throw new Exception("Incorrect number of arguments supplied to command.");
+                    }
+                    playerManager.addAIPlayer(command[1].split(",")[0],
+                            command[1].split(",")[1],
+                            command[1].split(",")[2]);
+                } else {//the command is invalid
+                    throw new Exception("\'" + command[0] + "\' is not a valid command.");
                 }
-            } else if (displayPlayer.equalsIgnoreCase(command[0])) {
-                if (command.length == 1) {
-                    playerManager.displayAllPlayers();
-                } else {
-                    playerManager.displayPlayer(command[1].split(",")[0].trim());
-                }
-            } else if (rankings.equalsIgnoreCase(command[0])) {
-                playerManager.rankPlayer();
-            } else if (playGame.equalsIgnoreCase(command[0])) {
-                if (playerManager.checkTwoPlayers(command[1].split(",")[0].trim(),
-                        command[1].split(",")[1].trim())) {
-                    gameManager.playGame(playerManager, input, command[1].split(",")[0].trim()
-                            , command[1].split(",")[1].trim());
-                }
+            } catch (Exception e) {//print the exception message
+                System.out.println(e.getMessage());
             }
         }
     }
@@ -105,9 +132,10 @@ public class TicTacToe {
         TicTacToe gameSystem = new TicTacToe();
         gameSystem.run();
     }
+
 }
 
-class Player {
+abstract class Player {
 
     /*Default Constructor*/
     public Player() {
@@ -131,6 +159,7 @@ class Player {
     private int wonGames;//the number of games won by a user
     private int drawnGames;//the number of games drawn by a user
 
+    abstract public Move makeMove(char[][] gameBoard);
     /* get and set methods for all private variable*/
 
     public String getUserName() {
@@ -212,7 +241,20 @@ class PlayerManager {
         //Get the index of the player
         int index = checkRepUserName(userName);
         if (index == -1) {
-            players.add(new Player(userName, familyName, givenName));
+            players.add(new HumanPlayer(userName, familyName, givenName));
+        } else {
+            System.out.println("The username has been used already.");
+        }
+    }
+
+    /* Add an AI player
+    * If this user is existed already, print out waring informaiton*/
+    public void addAIPlayer(String userName, String familyName, String givenName) {
+
+        //Get the index of the player
+        int index = checkRepUserName(userName);
+        if (index == -1) {
+            players.add(new AIPlayer(userName, familyName, givenName));
         } else {
             System.out.println("The username has been used already.");
         }
@@ -455,37 +497,104 @@ class PlayerManager {
         }
         return -1;
     }
+
+    /*save users' data when exits*/
+    public void storageInformation() {
+        try {
+            File playersFile = new File("players.dat");
+            //delete this file if it is existed
+            if (playersFile.exists()) {
+                playersFile.delete();
+            }
+            //create a new file
+            playersFile.createNewFile();
+            //write in the file
+            FileOutputStream playersOut = new FileOutputStream(playersFile, true);
+            for (int count = 0; count < players.size(); count++) {
+                playersOut.write((players.get(count).getUserName() + " "
+                        + players.get(count).getFamilyName() + " "
+                        + players.get(count).getGivenName() + " "
+                        + players.get(count).getPlayedGames() + " "
+                        + players.get(count).getWonGames() + " "
+                        + players.get(count).getDrawnGames() + " "
+                        + players.get(count).getClass() + "\n").getBytes());
+            }
+            playersOut.close();
+        } catch (Exception e) {
+            e.getMessage();
+        }
+    }
+
+    /*recover users' data from players.dat*/
+    public void resumeInformation() {
+        try {
+            File playersFile = new File("players.dat");
+            //open and read this file if it is existed
+            if (playersFile.exists()) {
+                FileInputStream playersIn = new FileInputStream(playersFile);
+                BufferedReader playersReader =
+                 new BufferedReader(new InputStreamReader(playersIn));
+                String playersLine = playersReader.readLine();
+                //in case the file is null
+                if (playersLine == null) {
+                    return;
+                }
+                Player tempPlayer;
+                while (playersLine != null) {
+                    //decide the class type of this method
+                    if (playersLine.split(" ")[7].equals("HumanPlayer")) {
+                        tempPlayer = new HumanPlayer();
+                    } else {
+                        tempPlayer = new AIPlayer();
+                    }
+                    //read player's information and store them in an ArrayList of players
+                    tempPlayer.setUserName(playersLine.split(" ")[0]);
+                    tempPlayer.setFamilyName(playersLine.split(" ")[1]);
+                    tempPlayer.setGivenName(playersLine.split(" ")[2]);
+                    tempPlayer.setPlayedGames(Integer.parseInt(playersLine.split(" ")[3]));
+                    tempPlayer.setWonGames(Integer.parseInt(playersLine.split(" ")[4]));
+                    tempPlayer.setDrawnGames(Integer.parseInt(playersLine.split(" ")[5]));
+                    players.add(tempPlayer);
+                    playersLine = playersReader.readLine();
+                }
+                playersReader.close();
+                playersIn.close();
+            }
+        } catch (Exception e) {
+            e.getMessage();
+        }
+    }
 }
 
 /*Manage one game and update statistics information after the game*/
 class GameManager {
 
-    private int[][] gridState;
+    private char[][] gameBoard;
 
     public GameManager() {
         super();
     }
 
-    //get method of gridState
-    public int[][] getGridState() {
-        return gridState;
+    //get method of gameBoard
+    public char[][] getGameBoard() {
+        return gameBoard;
     }
 
     //set method of gridState
-    public void setGridState(int[][] gridState) {
-        this.gridState = gridState;
+    public void setGridState(char[][] gameBoard) {
+        this.gameBoard = gameBoard;
     }
 
     /* initialize the grid's state
     * create a 3 x 3 grid and set all values 0(with no chess piece)*/
     public void initGridState() {
-        setGridState(new int[3][3]);
+        setGridState(new char[3][3]);
         int gridRow = 0;
         int gridColumn = 0;
 
-        for (; gridRow < 3; gridRow++) {
-            for (; gridColumn < 3; gridColumn++) {
-                gridState[gridRow][gridColumn] = 0;
+        for (gridRow = 0; gridRow < 3; gridRow++) {
+            for (gridColumn = 0; gridColumn < 3; gridColumn++) {
+                gameBoard[gridRow][gridColumn] = 32;
             }
         }
     }
@@ -498,20 +607,7 @@ class GameManager {
     public void printGrid() {
         for (int gridRow = 0; gridRow < 3; gridRow++) {
             for (int gridColumn = 0; gridColumn < 3; gridColumn++) {
-                switch (gridState[gridRow][gridColumn]) {
-                    case -1:
-                        System.out.print("O");
-                        break;
-                    case 0:
-                        System.out.print(" ");
-                        break;
-                    case 1:
-                        System.out.print("X");
-                        break;
-                    default:
-                        System.out.print("Wrong State Code!");
-                        break;
-                }
+                System.out.print(gameBoard[gridRow][gridColumn]);
                 if (gridColumn != 2) {
                     System.out.print("|");
                 } else {
@@ -530,20 +626,6 @@ class GameManager {
         printGrid();
     }
 
-    /* get winner name by analysing the resultCode
-    * if resultCode equals 3, Player X won
-    * if resultCode equals -3, Player O won
-    * */
-    private String getWinnerName(int resultCode) {
-        if (resultCode == 3) {
-            return "X";
-        } else if (resultCode == -3) {
-            return "O";
-        } else {
-            return "Continue";
-        }
-    }
-
     /* analyse and return game's state
     * decide who's the winner after 4 times movement
     * if one winner wins, return his name
@@ -555,7 +637,6 @@ class GameManager {
     public String getGameState(int movement) {
         int gridRow = 0;
         int gridColumn = 0;
-        int resultCode = 0;
 
         if (movement < 5) {
             return "Continue";
@@ -563,43 +644,50 @@ class GameManager {
 
         //for each row
         for (gridRow = 0; gridRow < 3; gridRow++) {
-            for (gridColumn = 0; gridColumn < 3; gridColumn++) {
-                resultCode += gridState[gridRow][gridColumn];
+            if (gameBoard[gridRow][0] == 'X'
+                    && gameBoard[gridRow][1] == 'X'
+                    && gameBoard[gridRow][2] == 'X') {
+                return "X";
+            } else if (gameBoard[gridRow][0] == 'O'
+                    && gameBoard[gridRow][1] == 'O'
+                    && gameBoard[gridRow][2] == 'O') {
+                return "O";
             }
-            if (!getWinnerName(resultCode).equals("Continue")) {
-                return getWinnerName(resultCode);
-            }
-            resultCode = 0;
         }
 
         //for each column
         for (gridColumn = 0; gridColumn < 3; gridColumn++) {
-            for (gridRow = 0; gridRow < 3; gridRow++) {
-                resultCode += gridState[gridRow][gridColumn];
+            if (gameBoard[0][gridColumn] == 'X'
+                    && gameBoard[1][gridColumn] == 'X'
+                    && gameBoard[2][gridColumn] == 'X') {
+                return "X";
+            } else if (gameBoard[0][gridColumn] == 'O'
+                    && gameBoard[1][gridColumn] == 'O'
+                    && gameBoard[2][gridColumn] == 'O') {
+                return "O";
             }
-            if (!getWinnerName(resultCode).equals("Continue")) {
-                return getWinnerName(resultCode);
-            }
-            resultCode = 0;
         }
 
         //for diagonal
-        for (gridRow = 0, gridColumn = 0; gridRow < 3 && gridColumn < 3;
-             gridRow++, gridColumn++) {
-            resultCode += gridState[gridRow][gridColumn];
+        if (gameBoard[0][0] == 'X'
+                && gameBoard[1][1] == 'X'
+                && gameBoard[2][2] == 'X') {
+            return "X";
+        } else if (gameBoard[0][0] == 'O'
+                && gameBoard[1][1] == 'O'
+                && gameBoard[2][2] == 'O') {
+            return "O";
         }
-        if (!getWinnerName(resultCode).equals("Continue")) {
-            return getWinnerName(resultCode);
-        }
-        resultCode = 0;
 
         //for anti-diagonal
-        for (gridRow = 0, gridColumn = 2; gridColumn > -1 && gridRow < 3;
-             gridColumn--, gridRow++) {
-            resultCode += gridState[gridRow][gridColumn];
-        }
-        if (!getWinnerName(resultCode).equals("Continue")) {
-            return getWinnerName(resultCode);
+        if (gameBoard[0][2] == 'X'
+                && gameBoard[1][1] == 'X'
+                && gameBoard[2][0] == 'X') {
+            return "X";
+        } else if (gameBoard[0][2] == 'O'
+                && gameBoard[1][1] == 'O'
+                && gameBoard[2][0] == 'O') {
+            return "O";
         }
 
         //has moved 9 times without winner
@@ -611,11 +699,12 @@ class GameManager {
     }
 
     /*check invalid movement and return corresponding waring information*/
-    public boolean checkGridMovement(int gridRow, int gridColumn) {
-        if (gridRow < 0 || gridRow > 2 || gridColumn < 0 || gridColumn > 2) {
+    public boolean checkGridMovement(Move newMove) {
+        if (newMove.getRow() < 0 || newMove.getRow() > 2
+        || newMove.getColumn() < 0 || newMove.getColumn() > 2) {
             System.out.println("Invalid move. You must place at a cell within {0,1,2} {0,1,2}.");
             return false;
-        } else if (gridState[gridRow][gridColumn] != 0) {
+        } else if (gameBoard[newMove.getRow()][newMove.getColumn()] != ' ') {
             System.out.println("Invalid move. The cell has been occupied.");
             return false;
         }
@@ -623,12 +712,11 @@ class GameManager {
     }
 
     /*play a game between two players: PlayerO(userNameO) and PlayerX(userNameX)*/
-    public void playGame(PlayerManager playerManager, Scanner scanner, String userNameO, String userNameX) {
+    public void playGame(PlayerManager playerManager,
+    Scanner scanner, String userNameO, String userNameX) {
 
         //state of a game
         String gameStateString = "Continue";
-        int gridRow = 0;
-        int gridColumn = 0;
         int movement = 0;//number of movement
 
         String givenNameO = playerManager.getGivenName(userNameO);
@@ -640,25 +728,27 @@ class GameManager {
         while (gameStateString.equals("Continue")) {
             movement++;
 
+            //access and store next chess piece's position
+            Move newMove;
             if (movement % 2 == 0) {
                 System.out.println(givenNameX + "'s move:");
+                newMove = playerManager.getPlayers().
+                get(playerManager.getIndex(userNameX)).makeMove(gameBoard);
             } else {
                 System.out.println(givenNameO + "'s move:");
+                newMove = playerManager.getPlayers().
+                get(playerManager.getIndex(userNameO)).makeMove(gameBoard);
             }
 
-            //access and store next chess piece's position
-            gridRow = scanner.nextInt();
-            gridColumn = scanner.nextInt();
-
-            if (!checkGridMovement(gridRow, gridColumn)) {
+            if (!checkGridMovement(newMove)) {
                 movement--;
                 continue;
             }
 
             if (movement % 2 == 0) {
-                gridState[gridRow][gridColumn] = 1;
+                gameBoard[newMove.getRow()][newMove.getColumn()] = 'X';
             } else {
-                gridState[gridRow][gridColumn] = -1;
+                gameBoard[newMove.getRow()][newMove.getColumn()] = 'O';
             }
 
             //print grid and get game's state
@@ -701,4 +791,94 @@ class GameManager {
         scanner.nextLine();
     }
 
+}
+
+/*Record one move of a user*/
+class Move {
+
+    int row;
+    int column;
+
+    /*Constructor*/
+    public Move() {
+
+    }
+
+    /*Constructor with arguments*/
+    public Move(int row, int column) {
+        setRow(row);
+        setColumn(column);
+    }
+
+    /*get and set method of row and column*/
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
+    public int getColumn() {
+        return column;
+    }
+
+    public void setColumn(int column) {
+        this.column = column;
+    }
+}
+
+/* Represent an ai player which extends from the abstract Player.
+* Contain the strategy to play*/
+class AIPlayer extends Player {
+
+    /*default constructor*/
+    public AIPlayer() {
+
+    }
+
+    /*constructor with arguments*/
+    public AIPlayer(String userName, String familyName, String givenName) {
+        super(userName, familyName, givenName);
+    }
+
+    /*Return movement based on ai strategy*/
+    @Override
+    public Move makeMove(char[][] gameBoard) {
+        int row;
+        int column = 0;
+        for (row = 0; row < 3; row++) {
+            for (column = 0; column < 3; column++) {
+                if (gameBoard[row][column] == 32 || gameBoard[row][column] == 0) {
+                    return (new Move(row, column));
+                }
+            }
+        }
+        return (new Move(row, column));
+    }
+}
+
+/* Represent a human player which extends from the abstract Player
+* Read movement from the input by human*/
+class HumanPlayer extends Player {
+
+    /*Default Constructor*/
+    public HumanPlayer() {
+
+    }
+
+    /*Constructor with arguments*/
+    public HumanPlayer(String userName, String familyName, String givenName) {
+        super(userName, familyName, givenName);
+    }
+
+    /*Return movement from human user's input*/
+    @Override
+    public Move makeMove(char[][] gameBoard) {
+        Move humanMove = new Move();
+        humanMove.setRow(TicTacToe.input.nextInt());
+        humanMove.setColumn(TicTacToe.input.nextInt());
+        return humanMove;
+    }
 }
